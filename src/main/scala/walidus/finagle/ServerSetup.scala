@@ -11,11 +11,8 @@ import com.twitter.finagle.httpx._
 import com.twitter.finagle.httpx.path._
 import com.twitter.{util => twitter}
 
-import scala.util.{Failure, Success, Try}
-
 object ServerSetup extends App{
   val system = ActorSystem("HelloSystem")
-  import scala.concurrent.ExecutionContext.Implicits.global
 
   val service = new Service[httpx.Request, httpx.Response] {
     var counter: Int = 0

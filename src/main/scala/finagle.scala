@@ -1,11 +1,12 @@
 package walidus
 
-import com.twitter.util
 import com.twitter.{util => twitter}
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 package object finagle {
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   implicit def toTwitterFuture[T](f: Future[T]): twitter.Future[T] = {
     val promise = twitter.Promise[T]()
     f.onComplete(promise update _)
