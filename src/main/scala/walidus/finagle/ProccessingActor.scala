@@ -1,20 +1,38 @@
 package walidus.finagle
 
-import akka.actor.Actor
+import java.util.concurrent.TimeUnit
+
+import akka.actor.{ActorRef, Actor, Props}
 import com.twitter.finagle.httpx
 import com.twitter.finagle.httpx.{Response, Version}
+import scala.concurrent.duration._
 
-object ServiceOfWork {
-  def proccess() = Thread.sleep(1000)
-}
+//Schedules to send the "foo"-message to the testActor after 50ms
+
+
 
 class ProccessingActor extends Actor{
+  import scala.concurrent.ExecutionContext.Implicits.global
+  val second = new FiniteDuration(1000L, TimeUnit.MILLISECONDS)
+  override def receive: Receive = endAfter(0 milliseconds)
 
-  override def receive: Receive = {
+  def endAfter(after: FiniteDuration): Receive = {
     case SecondDelay(v) =>
-      ServiceOfWork.proccess() // working for 1000 milis
+      val newTime = after.plus(second)
+      context.system.scheduler.scheduleOnce(newTime, self, SendResponse(v, sender(), newTime))
+      context become endAfter(newTime)
+    case SendResponse(v, sender, time) =>
+      context become endAfter(after.minus(second))
       sender ! Response(v, httpx.Status.Ok)
+      println(s"sended after: $time and from name: ${self.toString()}")
   }
+
+}
+
+object ProccessingActor {
+  def props() =
+    Props(classOf[ProccessingActor])
 }
 
 case class SecondDelay(v: Version)
+case class SendResponse(v: Version, sender: ActorRef, delay: FiniteDuration)
