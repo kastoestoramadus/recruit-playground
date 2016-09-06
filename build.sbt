@@ -6,4 +6,6 @@ scalaVersion := "2.11.7"
 
 libraryDependencies ++= List(
   "com.twitter" %% "finagle-httpx" % "6.29.0",
-  "com.typesafe.akka" %% "akka-actor" % "2.3.14")
+  "com.typesafe.akka" %% "akka-actor" % "2.3.14",
+  "org.scala-graph" %% "graph-core" % "1.11.2"
+)
