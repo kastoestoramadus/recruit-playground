@@ -1,3 +1,2 @@
-# finagle-recruit
-To start server type
-sbt run
+# Shop checkout
+sbt "run Orange Apple"
