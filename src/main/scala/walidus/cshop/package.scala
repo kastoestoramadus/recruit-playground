@@ -1,6 +1,10 @@
 package walidus
 
 package object cshop {
-  type Order = Seq[Item]
-  type Bill = Integer // in pennies
+  implicit def seqItem2Order(order: Seq[Item]): Order =
+    order.groupBy(identity).map(pair => (pair._1, pair._2.size))
+
+  type Order = Map[Item, Int]
+
+  type Bill = Int // in pennies
 }

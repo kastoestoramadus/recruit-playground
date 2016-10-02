@@ -7,9 +7,15 @@ class ShopTest extends FlatSpec with Matchers{
     Shop.makeBill(Seq(Apple, Orange)) shouldEqual 85
   }
   "Shop" should "give discount for oranges" in {
-    Shop.makeBill(Seq(Orange, Orange, Apple, Orange)) shouldEqual 110
+    Shop.makeBill(Seq(Orange, Orange, Orange)) shouldEqual 50
   }
   "Shop" should "give free apple for one apple" in {
-    Shop.makeBill(Seq(Apple, Apple, Orange, Apple)) shouldEqual 145
+    Shop.makeBill(Seq(Apple, Apple)) shouldEqual 60
+  }
+  "Shop" should "pass complex example" in {
+    Shop.makeBill(Seq(Orange, Orange, Apple, Orange)) shouldEqual 110
+  }
+  "Shop" should "pass second complex example" in {
+    Shop.makeBill(Seq(Apple, Apple, Orange, Apple, Orange, Orange)) shouldEqual 170
   }
 }
