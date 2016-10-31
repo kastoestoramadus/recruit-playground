@@ -7,9 +7,7 @@ object Shop {
     Banana -> 20
   )
   def promotionCounting(order: Order): Order = {
-    orangePromotion(
-      bananaAndApplePromotion(order)
-    )
+    order ++ orangePromotion(order) ++ bananaAndApplePromotion(order)
   }
   def makeBill(order: Order): Bill =
     promotionCounting(order)
@@ -17,37 +15,25 @@ object Shop {
       .sum
 
   def orangePromotion(order: Order): Order = {
-    order.map{ case (item, amount) => {
-      val newAmount = item match {
-        case Orange => (amount/3)*2 + amount%3
-        case _ => amount
-      }
-      item -> newAmount
-    }}
+    val amount = order(Orange)
+    Map(Orange -> ((amount/3)*2 + amount%3))
   }
   def bananaAndApplePromotion(order: Order): Order = {
-    val bananas = order.getOrElse(Banana,0)
-    val apples = order.getOrElse(Apple, 0)
-    val totalAmount = apples + bananas
+    val applicatives = Seq(
+      Banana -> order(Banana),
+      Apple -> order(Apple)
+    ).sortBy(_._2).reverse
+
+    val totalAmount = applicatives.foldLeft(0)((sum, pair) => sum + pair._2)
     val freeFruits = totalAmount/2
-    val (moreExpensive, lessExpensive) = {
-      val f: (Item, Bill) = (Apple, apples)
-      val s: (Item, Bill) = (Banana, bananas)
-      if(f._2 > s._2)
-        (f, s)
-      else
-        (s, f)
-    }
+    val moreExpensive = applicatives.head
+    val lessExpensive = applicatives.tail.head
 
     val remainFree: Bill = freeFruits - lessExpensive._2
 
     val more = moreExpensive._1 -> (moreExpensive._2 - Math.max(remainFree,0))
     val less = lessExpensive._1 -> Math.max(-remainFree,0)
 
-    order.map{ case (item, amount) => {
-      if(item == moreExpensive._1) more
-      else if (item == lessExpensive._1) less
-      else item -> amount
-    }}
+    Map(more, less)
   }
 }
