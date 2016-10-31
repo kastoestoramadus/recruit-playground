@@ -24,7 +24,7 @@ object Shop {
       Apple -> order(Apple)
     ).sortBy(_._2).reverse
 
-    val totalAmount = applicatives.foldLeft(0)((sum, pair) => sum + pair._2)
+    val totalAmount = applicatives.foldLeft(0)(_+_._2)
     val freeFruits = totalAmount/2
     val moreExpensive = applicatives.head
     val lessExpensive = applicatives.tail.head
