@@ -8,5 +8,5 @@ package object cshop {
 
   type Order = Map[Item, Int]
 
-  type Bill = Int // in pennies
+  type Bill = BigDecimal // in pennies
 }

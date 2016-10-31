@@ -29,10 +29,10 @@ object Shop {
     val moreExp = applicatives.head
     val lessExp = applicatives.tail.head
 
-    val remainFree = freeFruits - lessExp._2
+    val remainedFree = freeFruits - lessExp._2
 
-    val newValOfMoreExp = moreExp.copy(_2 = moreExp._2 - Math.max(remainFree,0))
-    val newValOfLessExp = lessExp.copy(_2 = Math.max(-remainFree,0))
+    val newValOfMoreExp = moreExp.copy(_2 = moreExp._2 - Math.max(remainedFree,0))
+    val newValOfLessExp = lessExp.copy(_2 = Math.max(-remainedFree,0))
 
     Map(newValOfMoreExp, newValOfLessExp)
   }
