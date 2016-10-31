@@ -26,13 +26,13 @@ object Shop {
 
     val totalAmount = applicatives.foldLeft(0)(_+_._2)
     val freeFruits = totalAmount/2
-    val moreExpensive = applicatives.head
-    val lessExpensive = applicatives.tail.head
+    val moreExp = applicatives.head
+    val lessExp = applicatives.tail.head
 
-    val remainFree: Bill = freeFruits - lessExpensive._2
+    val remainFree: Bill = freeFruits - lessExp._2
 
-    val more = moreExpensive._1 -> (moreExpensive._2 - Math.max(remainFree,0))
-    val less = lessExpensive._1 -> Math.max(-remainFree,0)
+    val more = moreExp.copy(_2 = moreExp._2 - Math.max(remainFree,0))
+    val less = lessExp.copy(_2 = Math.max(-remainFree,0))
 
     Map(more, less)
   }
