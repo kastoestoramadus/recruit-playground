@@ -29,7 +29,7 @@ object Shop {
     val moreExp = applicatives.head
     val lessExp = applicatives.tail.head
 
-    val remainFree: Bill = freeFruits - lessExp._2
+    val remainFree = freeFruits - lessExp._2
 
     val newValOfMoreExp = moreExp.copy(_2 = moreExp._2 - Math.max(remainFree,0))
     val newValOfLessExp = lessExp.copy(_2 = Math.max(-remainFree,0))
