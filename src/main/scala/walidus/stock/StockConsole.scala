@@ -16,7 +16,7 @@ object StockConsole extends App{
     val typed: Order = getNext()
     val (newBook, transactions) = orderBook.placeOrder(typed)
 
-    printAsJson(toDTO(newBook.remainingOrders))
+    printAsJson(toDTO(newBook.storedOrders))
     printAsJson(transactions)
 
     orderBook = newBook
