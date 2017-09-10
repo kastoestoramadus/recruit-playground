@@ -3,7 +3,36 @@ package walidus.stock.model
 case class OrderBook(storedOrders: Orders) {
   import OrderBook._
 
-  def calculateNewState(s: Order, remainingOrders: List[Order]) = {
+  def placeOrder(order: Order): (OrderBook, Seq[Transaction]) = {
+    order match {
+      case b: Buy =>
+        val update: MatchingAgg = calculateNewState(b, storedOrders.sellList)
+
+        val newBuyO = addIfPresent(update.inProcess, storedOrders.buyList)
+        val newSellO = update.remaining
+
+        (OrderBook(Orders(newBuyO, newSellO)), update.transactions)
+      case s: Sell =>
+        val update: MatchingAgg = calculateNewState(s, storedOrders.buyList)
+
+        val newSellO = addIfPresent(update.inProcess,  storedOrders.sellList)
+        val newBuyO = update.remaining
+
+        (OrderBook(Orders(newBuyO, newSellO)), update.transactions)
+    }
+  }
+
+  def addIfPresent(el: Option[Order], to: List[Order]): List[Order] =
+    el.map( placeNewItem(_, to))
+      .getOrElse(to)
+
+}
+
+object OrderBook {
+  val empty = OrderBook(Orders.empty)
+
+  // FIXME should be recursive
+  private def calculateNewState(s: Order, remainingOrders: List[Order]) = {
     var aggregate: MatchingAgg = MatchingAgg(Some(s), Nil, remainingOrders)
     var cycleResult: MatchingAgg = null
     do {
@@ -16,34 +45,6 @@ case class OrderBook(storedOrders: Orders) {
     aggregate.copy(transactions = aggregate.transactions.reverse)
   }
 
-  def placeOrder(order: Order): (OrderBook, Seq[Transaction]) = {
-    order match {
-      case b: Buy =>
-        val update: MatchingAgg = calculateNewState(b, storedOrders.sellList)
-
-        val newBuyO = addIfPresent(update.inProcess, storedOrders.buyList)
-        val newSellO = update.remaining
-        (OrderBook(Orders(newBuyO, newSellO)), update.transactions)
-      case s: Sell =>
-        val update: MatchingAgg = calculateNewState(s, storedOrders.buyList)
-
-        val newSellO = addIfPresent(update.inProcess,  storedOrders.sellList)
-        val newBuyO = update.remaining
-
-        (OrderBook(Orders(newBuyO, newSellO)), update.transactions)
-    }
-
-  }
-
-  def addIfPresent(el: Option[Order], to: List[Order]): List[Order] =
-    el.map( placeNewItem(_, to))
-      .getOrElse(to)
-
-}
-
-object OrderBook {
-  val empty = OrderBook(Orders.empty)
-
   // _1 - first group, _2 - rest
   def detachFirstGroup(orders: List[Order]): (List[Order], List[Order]) =
     orders.span(_.price == orders.head.price)
@@ -54,7 +55,7 @@ object OrderBook {
     else
       group.foldLeft(MatchingAgg(Some(newOrder), Nil, Nil)) { (agg, b) => agg.inProcess match {
           case Some(s) =>
-            val qT = Math.min(getStepQuantity(s),getStepQuantity(b))
+            val qT = Math.min(stepQuantity(s),stepQuantity(b))
             val processingOrderUpdate = {
               val tmp = s.quantity - qT
               if(tmp == 0) None
@@ -72,11 +73,11 @@ object OrderBook {
         }
       }
   }
-  def getStepQuantity(order: Order) = order match {
+  def stepQuantity(order: Order) = order match {
     case l: Order with Limit => l.quantity
     case i: Order with Iceberg => Math.min(i.peak, i.quantity)
   }
-
+  // FIXME how to set both Orders should be the same DirectionType?
   def placeNewItem(newO: Order, l: List[Order]): List[Order] = {
     val comp = getComparator(newO)
     val (before, after) = l.span(oldO => !comp(newO.price, oldO.price))
@@ -91,8 +92,8 @@ object OrderBook {
   def isProfitable(first: Order, second: Order): Boolean = (first,second) match {
     case (f: Buy, s: Sell) => f.price >= s.price
     case (f: Sell, s: Buy) => f.price <= s.price
-    case default => assert(false, default); ???
+    case default => assert(false, default); ??? // ugly, compiler should forbid such cases
   }
-
+  // FIXME how to set both Orders should be an opposite DirectionTypes?
   case class MatchingAgg(inProcess: Option[Order], transactions: List[Transaction], remaining: List[Order])
 }

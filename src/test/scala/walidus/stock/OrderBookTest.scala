@@ -41,16 +41,6 @@ class OrderBookTest extends FlatSpec with Matchers{
     result._2.last shouldBe Transaction(1, 4, 14, 10)
   }
 
-  "OrderBook" should "execute Iceberg nicely with other order with same price" in {
-    val orders = List(o2, o1.copy(price = o2.price))
-    val o4 = SellLimitOrder(4, 13, 60)
-    val result = OrderBook(Orders(orders,Nil)).placeOrder(o4)
-
-    val resultOrders = result._1.storedOrders
-    resultOrders.buyList.head.quantity shouldBe 10
-    result._2.last shouldBe Transaction(2, 4, 15, 20)
-  }
-
   "OrderBook" should "execute transactions for matched new Buy order" in {
     val o1 = SellLimitOrder(1, 15, 20)
     val o2 = SellIcebergOrder(2, 14, 50, 20)
@@ -61,11 +51,20 @@ class OrderBookTest extends FlatSpec with Matchers{
     val finalOrderBook = OrderBook(expectedOrders).placeOrder(o4)
 
     val remainingOrders = finalOrderBook._1.storedOrders
-    println(finalOrderBook._2)
 
     remainingOrders.buyList.head.quantity shouldBe 15
     remainingOrders.sellList.head.quantity shouldBe 10
     finalOrderBook._2.size shouldBe 4
     finalOrderBook._2.last shouldBe Transaction(1, 4, 15, 10)
+  }
+
+  "OrderBook" should "execute rest Iceberg order after other orders with same price" in {
+    val orders = List(o2, o1.copy(price = o2.price))
+    val o4 = SellLimitOrder(4, 13, 60)
+    val result = OrderBook(Orders(orders,Nil)).placeOrder(o4)
+
+    val resultOrders = result._1.storedOrders
+    resultOrders.buyList.head.quantity shouldBe 10
+    result._2.last shouldBe Transaction(2, 4, 15, 20)
   }
 }

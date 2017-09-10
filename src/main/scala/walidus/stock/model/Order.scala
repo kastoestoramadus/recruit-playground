@@ -1,8 +1,12 @@
 package walidus.stock.model
 
+/* Direction and Types not as field done for experiment.
+*  With fields and more OrderTypes would be much less classes and serialization would be easier.
+*  In current way could use more compiler help.
+*/
 sealed trait Order {
   this: OrderType with OrderDirection  =>
-  def updateQuantityTo(q: Int): Order
+  def updateQuantityTo(q: Int): Order // TODO shapeless
 
   val id: Id
   val price: Int
@@ -40,6 +44,7 @@ trait Buy extends OrderDirection
 trait Sell extends OrderDirection
 
 // list order is important, relates to time of placing an order
+// FIXME compiler checks are missing. Would need to push further more generics. ~(with Buy/Sale)
 case class Orders(buyList: List[Order], sellList: List[Order])
 
 object Orders {
