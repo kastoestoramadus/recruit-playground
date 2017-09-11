@@ -4,16 +4,16 @@ case class OrderBook(storedOrders: Orders) {
   import OrderBook._
 
   def placeOrder(order: Order): (OrderBook, Seq[Transaction]) = {
-    order match {
-      case b: Buy =>
-        val update: MatchingAgg = calculateNewState(b, storedOrders.sellList)
+    order.direciton match {
+      case Buy =>
+        val update: MatchingAgg = calculateNewState(order, storedOrders.sellList)
 
         val newBuyO = addIfPresent(update.inProcess, storedOrders.buyList)
         val newSellO = update.remaining
 
         (OrderBook(Orders(newBuyO, newSellO)), update.transactions)
-      case s: Sell =>
-        val update: MatchingAgg = calculateNewState(s, storedOrders.buyList)
+      case Sell =>
+        val update: MatchingAgg = calculateNewState(order, storedOrders.buyList)
 
         val newSellO = addIfPresent(update.inProcess,  storedOrders.sellList)
         val newBuyO = update.remaining
@@ -55,7 +55,7 @@ object OrderBook {
     else
       group.foldLeft(MatchingAgg(Some(newOrder), Nil, Nil)) { (agg, b) => agg.inProcess match {
           case Some(s) =>
-            val qT = Math.min(stepQuantity(s),stepQuantity(b))
+            val qT = Math.min(s.stepQuantity, b.stepQuantity)
             val processingOrderUpdate = {
               val tmp = s.quantity - qT
               if(tmp == 0) None
@@ -73,10 +73,7 @@ object OrderBook {
         }
       }
   }
-  def stepQuantity(order: Order) = order match {
-    case l: Order with Limit => l.quantity
-    case i: Order with Iceberg => Math.min(i.peak, i.quantity)
-  }
+
   // FIXME how to set both Orders should be the same DirectionType?
   def placeNewItem(newO: Order, l: List[Order]): List[Order] = {
     val comp = getComparator(newO)
@@ -84,14 +81,14 @@ object OrderBook {
     before ++ List(newO) ++ after
   }
 
-  def getComparator(o: Order): (Int, Int) => Boolean = o match {
-    case s: Sell => _ < _
-    case b: Buy => _ > _
+  def getComparator(o: Order): (Int, Int) => Boolean = o.direciton match {
+    case Sell => _ < _
+    case Buy => _ > _
   }
 
-  def isProfitable(first: Order, second: Order): Boolean = (first,second) match {
-    case (f: Buy, s: Sell) => f.price >= s.price
-    case (f: Sell, s: Buy) => f.price <= s.price
+  def isProfitable(first: Order, second: Order): Boolean = (first.direciton, second.direciton) match {
+    case (Buy, Sell) => first.price >= second.price
+    case (Sell, Buy) => first.price <= second.price
     case default => assert(false, default); ??? // ugly, compiler should forbid such cases
   }
   // FIXME how to set both Orders should be an opposite DirectionTypes?

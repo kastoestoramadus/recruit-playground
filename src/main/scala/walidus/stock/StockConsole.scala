@@ -10,22 +10,27 @@ object StockConsole extends App{
 
   var orderBook = OrderBook.empty
 
-  while(true) {
+  while(true) { // TODO adjust to load from STD Input
     println("Place new order.")
 
     val typed: Order = getNext()
     val (newBook, transactions) = orderBook.placeOrder(typed)
 
-    printAsJson(toDTO(newBook.storedOrders))
+    printAsJson(OrdersDTO(newBook.storedOrders))
     printAsJson(transactions)
 
     orderBook = newBook
   }
 
-  def getNext(): Order = new SellLimitOrder(1, 2, 3) // FIXME
-  def toDTO(orders: Orders): OrdersDTO = ???
-  def printAsJson(o: OrdersDTO): Unit = ???
-  def printAsJson(transactions: Seq[Transaction]): Unit = ???
+  def getNext(): Order = new LimitOrder(Sell, 1, 2, 3) // FIXME
+
+  def orderFromJson(str: String): Order = ???
+
+  def printAsJson(o: OrdersDTO): Unit = {
+    println(o) // FIXME
+  }
+  def printAsJson(transactions: Seq[Transaction]): Unit =
+    transactions.foreach(println) // FIXME
 
   def toVisibleOrders(orders: Seq[Order]): Seq[VisibleOrder] = orders.map{ o => o match {
     case i: Iceberg => VisibleOrder(i.id, i.price, Math.min(i.quantity, i.peak))
@@ -34,4 +39,16 @@ object StockConsole extends App{
 }
 
 case class OrdersDTO(buyOrders: List[VisibleOrder], sellOrders: List[VisibleOrder])
+object OrdersDTO {
+  def apply(orders: Orders): OrdersDTO = OrdersDTO(
+    orders.buyList.map(VisibleOrder.apply),
+    orders.sellList.map(VisibleOrder.apply)
+  )
+}
+
 case class VisibleOrder(id: Id, price: Int, quantity: Int)
+object VisibleOrder {
+  def apply(o: Order): VisibleOrder = {
+    VisibleOrder(o.id, o.price, o.stepQuantity)
+  }
+}

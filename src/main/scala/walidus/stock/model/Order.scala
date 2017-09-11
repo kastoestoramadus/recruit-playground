@@ -1,36 +1,24 @@
 package walidus.stock.model
 
-/* Direction and Types not as field done for experiment.
-*  With fields and more OrderTypes would be much less classes and serialization would be easier.
-*  In current way could use more compiler help.
-*/
 sealed trait Order {
-  this: OrderType with OrderDirection  =>
-  def updateQuantityTo(q: Int): Order // TODO shapeless
+  def updateQuantityTo(q: Int): Order // Fixme with shapeless
+  def stepQuantity: Int = quantity
 
+  val direciton: OrderDirection
   val id: Id
   val price: Int
   val quantity: Int
 }
 
-case class SellLimitOrder(id: Id, price: Int, quantity: Int)
-  extends Order with Sell with Limit {
+case class LimitOrder(direciton: OrderDirection, id: Id, price: Int, quantity: Int)
+  extends Order with Limit {
   override def updateQuantityTo(q: Id) = this.copy(quantity = q)
 }
 
-case class SellIcebergOrder(id: Id, price: Int, quantity: Int, peak: Int)
-  extends Order with Sell with Iceberg {
+case class IcebergOrder(direciton: OrderDirection, id: Id, price: Int, quantity: Int, peak: Int)
+  extends Order with Iceberg {
   override def updateQuantityTo(q: Id) = this.copy(quantity = q)
-}
-
-case class BuyLimitOrder(id: Id, price: Int, quantity: Int)
-  extends Order with Buy with Limit {
-  override def updateQuantityTo(q: Id) = this.copy(quantity = q)
-}
-
-case class BuyIcebergOrder(id: Id, price: Int, quantity: Int, peak: Int)
-  extends Order with Buy with Iceberg {
-  override def updateQuantityTo(q: Id) = this.copy(quantity = q)
+  override def stepQuantity: Int = Math.min(peak, quantity)
 }
 
 sealed trait OrderType
@@ -40,8 +28,8 @@ trait Iceberg extends OrderType {
 }
 
 sealed trait OrderDirection
-trait Buy extends OrderDirection
-trait Sell extends OrderDirection
+object Buy extends OrderDirection
+object Sell extends OrderDirection
 
 // list order is important, relates to time of placing an order
 // FIXME compiler checks are missing. Would need to push further more generics. ~(with Buy/Sale)
