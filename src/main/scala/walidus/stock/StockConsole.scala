@@ -1,36 +1,52 @@
 package walidus.stock
 
+import play.api.libs.json._
 import walidus.stock.model._
 
-object StockConsole extends App{
+import scala.io.StdIn
+import scala.util.Try
 
-  println("Welcome to stock Console. You are connected to the OrderBook. Type new orders. Examples of orders:")
-  println("{“type”: “Limit”, “order”: {“direction”: “Buy”, “id”: 1, “price”: 14, “quantity”: 20}}")
-  println("{“type”: “Iceberg”, “order”: {“direction”: “Sell”, “id”: 2, “price”: 15, “quantity”: 50, “peak”: 20}}")
+object StockConsole extends App{
+  println("""Welcome to stock Console. You are connected to the OrderBook. Type new orders. Examples of orders:""")
+  println("""{"type": "Limit", "order": {"direction": "Buy", "id": 1, "price": 14, "quantity": 20}}""")
+  println("""{"type": "Iceberg", "order": {"direction": "Buy", "id": 2, "price": 15, "quantity": 50, "peak": 20}}""")
+  println("""{"type": "Limit", "order": {"direction": "Sell", "id": 3, "price": 16, "quantity": 15}}""")
+  println("""{"type": "Limit", "order": {"direction": "Sell", "id": 4, "price": 13, "quantity": 60}}""")
 
   var orderBook = OrderBook.empty
+  Iterator.continually(StdIn.readLine())
+    .takeWhile(line => line != null && line.nonEmpty)
+    .map(orderFromJson)
+    .filter(_.isSuccess).map(_.get)
+    .foreach(typed => {
+      val (newBook, transactions) = orderBook.placeOrder(typed)
 
-  while(true) { // TODO adjust to load from STD Input
-    println("Place new order.")
+      printAsJson(OrdersDTO(newBook.storedOrders))
+      printAsJson(transactions)
 
-    val typed: Order = getNext()
-    val (newBook, transactions) = orderBook.placeOrder(typed)
+      orderBook = newBook
+    })
 
-    printAsJson(OrdersDTO(newBook.storedOrders))
-    printAsJson(transactions)
-
-    orderBook = newBook
+  def orderFromJson(str: String): Try[Order] = Try{
+    val json = Json.parse(str)
+    Formatters.tROF.reads(json).map( raw => {
+      val o = raw.order
+      val dir = o.direction match {
+        case "Buy" => Buy
+        case "Sell" => Sell
+      }
+      raw.`type` match {
+        case "Limit" => LimitOrder(dir, o.id, o.price, o.quantity)
+        case "Iceberg" => IcebergOrder(dir, o.id, o.price, o.quantity, o.peak.get)
+      }
+    }).get
   }
-
-  def getNext(): Order = new LimitOrder(Sell, 1, 2, 3) // FIXME
-
-  def orderFromJson(str: String): Order = ???
 
   def printAsJson(o: OrdersDTO): Unit = {
-    println(o) // FIXME
+    println(Formatters.oDTO.writes(o))
   }
   def printAsJson(transactions: Seq[Transaction]): Unit =
-    transactions.foreach(println) // FIXME
+    transactions.foreach(Formatters.t.writes)
 
   def toVisibleOrders(orders: Seq[Order]): Seq[VisibleOrder] = orders.map{ o => o match {
     case i: Iceberg => VisibleOrder(i.id, i.price, Math.min(i.quantity, i.peak))
@@ -51,4 +67,16 @@ object VisibleOrder {
   def apply(o: Order): VisibleOrder = {
     VisibleOrder(o.id, o.price, o.stepQuantity)
   }
+}
+
+case class TypedRawOrder(`type`: String, order: RawOrder)
+object Formatters {
+  implicit val rOF = Json.format[RawOrder]
+  implicit val tROF = Json.format[TypedRawOrder]
+  implicit val vO = Json.format[VisibleOrder]
+  implicit val oDTO = Json.format[OrdersDTO]
+  implicit val t = Json.format[Transaction]
+}
+case class RawOrder(direction: String, id: Int, price: Int, quantity: Int, peak: Option[Int])
+object RawOrder {
 }
