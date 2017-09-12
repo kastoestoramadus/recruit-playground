@@ -7,11 +7,13 @@ import scala.io.StdIn
 import scala.util.Try
 
 object StockConsole extends App{
-  println("""Welcome to stock Console. You are connected to the OrderBook. Type new orders. Examples of orders:""")
+
+  println("""Welcome to stock Console. You are connected to the OrderBook. Examples of orders:""")
   println("""{"type": "Limit", "order": {"direction": "Buy", "id": 1, "price": 14, "quantity": 20}}""")
   println("""{"type": "Iceberg", "order": {"direction": "Buy", "id": 2, "price": 15, "quantity": 50, "peak": 20}}""")
   println("""{"type": "Limit", "order": {"direction": "Sell", "id": 3, "price": 16, "quantity": 15}}""")
   println("""{"type": "Limit", "order": {"direction": "Sell", "id": 4, "price": 13, "quantity": 60}}""")
+  print("Type new orders:\n>")
 
   var orderBook = OrderBook.empty
   Iterator.continually(StdIn.readLine())
@@ -23,6 +25,7 @@ object StockConsole extends App{
 
       printAsJson(OrdersDTO(newBook.storedOrders))
       printAsJson(transactions)
+      print('>')
 
       orderBook = newBook
     })
@@ -46,7 +49,7 @@ object StockConsole extends App{
     println(Formatters.oDTO.writes(o))
   }
   def printAsJson(transactions: Seq[Transaction]): Unit =
-    transactions.foreach(Formatters.t.writes)
+    transactions.map(Formatters.t.writes).foreach(println)
 
   def toVisibleOrders(orders: Seq[Order]): Seq[VisibleOrder] = orders.map{ o => o match {
     case i: Iceberg => VisibleOrder(i.id, i.price, Math.min(i.quantity, i.peak))
