@@ -1,6 +1,6 @@
-package pairprogramming;
+package pairprogramming
 
-import org.scalatest.{FlatSpec, Matchers};
+import org.scalatest.{FlatSpec, Matchers}
 
 class DivisorsFinderTest extends FlatSpec with Matchers {
     "Finder" should " find with most divisors" in {

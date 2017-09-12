@@ -1,7 +1,6 @@
-package walidus.stock
+package walidus.stock.model
 
 import org.scalatest.{FlatSpec, Matchers}
-import walidus.stock.model._
 
 class OrderBookTest extends FlatSpec with Matchers{
   val o1 = LimitOrder(Buy, 1, 14, 20)

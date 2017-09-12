@@ -2,9 +2,10 @@ package walidus.finagle
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{ActorRef, Actor, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import com.twitter.finagle.httpx
 import com.twitter.finagle.httpx.{Response, Version}
+
 import scala.concurrent.duration._
 
 //Schedules to send the "foo"-message to the testActor after 50ms
@@ -30,8 +31,7 @@ class ProccessingActor extends Actor{
 }
 
 object ProccessingActor {
-  def props() =
-    Props(classOf[ProccessingActor])
+  def props() = Props(new ProccessingActor())
 }
 
 case class SecondDelay(v: Version)

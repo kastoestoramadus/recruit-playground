@@ -19,7 +19,7 @@ object TwoMostDiv {
       val divs = (0 to 5000).count(el%_==0)
       (divs, el)
     }.sortWith((f,s)=>f._1 > s._1).take(2).map(_._2)
-    (seq(0), seq(1))
+    (seq.head, seq(1))
   }
 
 }
