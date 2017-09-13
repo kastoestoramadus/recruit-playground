@@ -27,6 +27,6 @@ object Formatters {
       }
     }).get
   }
+  case class TypedRawOrder(`type`: String, order: RawOrder)
+  case class RawOrder(direction: String, id: Int, price: Int, quantity: Int, peak: Option[Int])
 }
-case class TypedRawOrder(`type`: String, order: RawOrder)
-case class RawOrder(direction: String, id: Int, price: Int, quantity: Int, peak: Option[Int])

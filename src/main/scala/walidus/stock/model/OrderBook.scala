@@ -1,6 +1,8 @@
 package walidus.stock.model
 
-case class OrderBook(storedOrders: Orders) {
+import stock.model.VisibleOrders
+
+case class OrderBook(private[stock] val storedOrders: Orders) {
   import OrderBook._
 
   def placeOrder(order: Order): (OrderBook, Seq[Transaction]) = {
@@ -22,14 +24,27 @@ case class OrderBook(storedOrders: Orders) {
     }
   }
 
-  def addIfPresent(el: Option[Order], to: List[Order]): List[Order] =
-    el.map( placeNewItem(_, to))
-      .getOrElse(to)
-
+  def ordersForUsers: VisibleOrders = VisibleOrders(storedOrders)
 }
 
 object OrderBook {
   val empty = OrderBook(Orders.empty)
+
+  private def addIfPresent(el: Option[Order], to: List[Order]): List[Order] =
+    el.map( placeNewItem(_, to))
+      .getOrElse(to)
+
+  // FIXME how to set both Orders should be the same DirectionType?
+  private[model] def placeNewItem(newO: Order, l: List[Order]): List[Order] = {
+    val comp = getComparator(newO)
+    val (before, after) = l.span(oldO => !comp(newO.price, oldO.price))
+    before ++ List(newO) ++ after
+  }
+
+  private def getComparator(o: Order): (Int, Int) => Boolean = o.direciton match {
+    case Sell => _ < _
+    case Buy => _ > _
+  }
 
   // FIXME should be recursive
   private def calculateNewState(s: Order, remainingOrders: List[Order]) = {
@@ -74,18 +89,6 @@ object OrderBook {
           case None => MatchingAgg(None, agg.transactions, b :: agg.remaining)
         }
       }
-  }
-
-  // FIXME how to set both Orders should be the same DirectionType?
-  private[model] def placeNewItem(newO: Order, l: List[Order]): List[Order] = {
-    val comp = getComparator(newO)
-    val (before, after) = l.span(oldO => !comp(newO.price, oldO.price))
-    before ++ List(newO) ++ after
-  }
-
-  private def getComparator(o: Order): (Int, Int) => Boolean = o.direciton match {
-    case Sell => _ < _
-    case Buy => _ > _
   }
 
   private def isProfitable(first: Order, second: Order): Boolean = (first.direciton, second.direciton) match {

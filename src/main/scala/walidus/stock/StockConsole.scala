@@ -22,7 +22,7 @@ object StockConsole extends App{
     .foreach(typed => {
       val (newBook, transactions) = orderBook.placeOrder(typed)
 
-      printAsJson(VisibleOrders(newBook.storedOrders))
+      printAsJson(newBook.ordersForUsers)
       printAsJson(transactions)
 
       orderBook = newBook
